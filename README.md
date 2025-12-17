@@ -70,7 +70,7 @@ pokemon-flask-app/
 1. Clone the repository:
 ```
 
-git clone [https://github.com/your-username/pokemon-legendary-prediction.git](https://github.com/your-username/pokemon-legendary-prediction.git)
+git clone [https://github.com/
 
 ```
 
