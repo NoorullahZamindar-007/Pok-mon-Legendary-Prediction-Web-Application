@@ -11,7 +11,7 @@ The Pokémon Legendary Prediction Web Application allows users to input Pokémon
 The project demonstrates the complete machine learning lifecycle, including feature engineering, model training, and deployment as a web application.
  
 ## Features 
-   
+    
 - Predicts Legendary or Not Legendary Pokémon 
 - Displays probability score for Legendary classification     
 - Supports multiple Pokémon attributes including base stats and types 
