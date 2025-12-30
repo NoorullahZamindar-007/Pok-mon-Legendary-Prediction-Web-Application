@@ -12,7 +12,7 @@ The project demonstrates the complete machine learning lifecycle, including feat
  
 ## Features 
     
-- Predicts Legendary or Not Legendary Pokémon 
+- Predicts Legendary or Not Legendary Pokémon  
 - Displays probability score for Legendary classification     
 - Supports multiple Pokémon attributes including base stats and types 
 - Interactive dashboard showing feature importance
