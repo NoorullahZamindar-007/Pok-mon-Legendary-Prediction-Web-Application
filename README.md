@@ -4,7 +4,7 @@
 
 This project is a machine learning–powered web application that predicts whether a Pokémon is Legendary or Not Legendary based on its attributes. The application integrates a trained Random Forest classification model with a Flask-based web interface to provide real-time predictions and model insights.
 
-## Overview             
+## Overview              
     
 The Pokémon Legendary Prediction Web Application allows users to input Pokémon characteristics such as base stats, generation, types, physical attributes, and special properties. Based on these inputs, the system predicts the Legendary status and provides the probability associated with the prediction. 
   
