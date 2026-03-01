@@ -17,7 +17,7 @@ The project demonstrates the complete machine learning lifecycle, including feat
 - Clean, responsive, and user-friendly interface
 - Real-time prediction using a trained machine learning model
 
-## Technology Stack
+## Technology Stack 
 
 - Python
 - Flask
