@@ -15,7 +15,7 @@ The project demonstrates the complete machine learning lifecycle, including feat
 - Supports multiple Pokémon attributes including base stats and types     
 - Interactive dashboard showing feature importance  
 - Clean, responsive, and user-friendly interface 
-- Real-time prediction using a trained machine learning model 
+- Real-time prediction using a trained machine learning model  
 
 ## Technology Stack 
 
