@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 from flask import Flask, render_template, request, redirect, url_for, flash
 
-# ---- Fix for pickles created with newer numpy paths (numpy._core) ----
+# ---- Fix for pickles created with newer numpy paths (numpy._core) ---- 
 # If your pickle throws: ModuleNotFoundError: No module named 'numpy._core'
 # this alias usually fixes it.
 try:
