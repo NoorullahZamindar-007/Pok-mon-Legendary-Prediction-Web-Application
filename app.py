@@ -17,7 +17,7 @@ except Exception:
     pass
 
 app = Flask(__name__)
-app.secret_key = "change-this-secret-key"
+app.secret_key = "change-this-secret-key" 
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "pokemon_model.pickle")
 
