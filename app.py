@@ -12,7 +12,7 @@ try:
     sys.modules["numpy._core"] = _np.core
     sys.modules["numpy._core._multiarray_umath"] = _np.core._multiarray_umath
     sys.modules["numpy._core.multiarray"] = _np.core.multiarray 
-    sys.modules["numpy._core.umath"] = _np.core.umath
+    sys.modules["numpy._core.umath"] = _np.core.umath 
 except Exception:
     pass
 
