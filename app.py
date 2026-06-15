@@ -19,7 +19,7 @@ except Exception:
 app = Flask(__name__)
 app.secret_key = "change-this-secret-key" 
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "pokemon_model.pickle")
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "pokemon_model.pickle") 
 
 # Load model once on startup
 with open(MODEL_PATH, "rb") as f:
