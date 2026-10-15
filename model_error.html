@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Model unavailable · Pokémon Legendary Predictor{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6 text-center">
+    <i class="bi bi-exclamation-triangle-fill display-4 text-warning"></i>
+    <h1 class="h3 mt-3">Prediction model unavailable</h1>
+    <p class="text-muted">The app is running, but the trained model could not be loaded:</p>
+    <div class="alert alert-danger text-start">{{ error }}</div>
+    <p class="small text-muted">
+      The model file <code>pokemon_model.pickle</code> must sit next to
+      <code>app.py</code>. Train it with <code>Pokemon.ipynb</code>, then reload this page.
+    </p>
+    <a class="btn btn-primary" href="{{ url_for('index') }}">
+      <i class="bi bi-arrow-clockwise me-1"></i>Try again
+    </a>
+  </div>
+</div>
+{% endblock %}
