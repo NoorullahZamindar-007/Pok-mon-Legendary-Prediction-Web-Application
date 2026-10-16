@@ -83,13 +83,22 @@ COLOR_FEATURES = [
 ]
 
 
-def to_float(val, default=0.0):
+def to_float(val, default=0.0, minimum=None):
+    """Parse a numeric form field, falling back to default on bad input.
+
+    minimum clamps the result from below; game stats and measurements can
+    never be negative, so a tampered form value cannot poison the model.
+    """
     try:
         if val is None or str(val).strip() == "":
-            return float(default)
-        return float(val)
+            result = float(default)
+        else:
+            result = float(val)
     except Exception:
-        return float(default)
+        result = float(default)
+    if minimum is not None:
+        result = max(minimum, result)
+    return result
 
 
 def to_int(val, default=0):
@@ -108,13 +117,13 @@ def build_feature_vector(form, features):
     x = {name: 0.0 for name in features}
 
     # numeric inputs
-    x["Total"] = to_float(form.get("Total"), 0)
-    x["HP"] = to_float(form.get("HP"), 0)
-    x["Attack"] = to_float(form.get("Attack"), 0)
-    x["Defense"] = to_float(form.get("Defense"), 0)
-    x["Sp_Atk"] = to_float(form.get("Sp_Atk"), 0)
-    x["Sp_Def"] = to_float(form.get("Sp_Def"), 0)
-    x["Speed"] = to_float(form.get("Speed"), 0)
+    x["Total"] = to_float(form.get("Total"), 0, minimum=0)
+    x["HP"] = to_float(form.get("HP"), 0, minimum=0)
+    x["Attack"] = to_float(form.get("Attack"), 0, minimum=0)
+    x["Defense"] = to_float(form.get("Defense"), 0, minimum=0)
+    x["Sp_Atk"] = to_float(form.get("Sp_Atk"), 0, minimum=0)
+    x["Sp_Def"] = to_float(form.get("Sp_Def"), 0, minimum=0)
+    x["Speed"] = to_float(form.get("Speed"), 0, minimum=0)
 
     x["Generation"] = to_int(form.get("Generation"), 1)
 
@@ -127,13 +136,13 @@ def build_feature_vector(form, features):
     x["Pr_Male"] = max(0.0, min(1.0, x["Pr_Male"]))
 
     # size + catch
-    x["Height_m"] = to_float(form.get("Height_m"), 1.0)
-    x["Weight_kg"] = to_float(form.get("Weight_kg"), 10.0)
-    x["Catch_Rate"] = to_float(form.get("Catch_Rate"), 45.0)
+    x["Height_m"] = to_float(form.get("Height_m"), 1.0, minimum=0)
+    x["Weight_kg"] = to_float(form.get("Weight_kg"), 10.0, minimum=0)
+    x["Catch_Rate"] = to_float(form.get("Catch_Rate"), 45.0, minimum=0)
 
     # Body_Style_new was frequency-encoded in your notebook
     # We accept it as a number. If user doesn't know, keep default.
-    x["Body_Style_new"] = to_float(form.get("Body_Style_new"), 1.0)
+    x["Body_Style_new"] = to_float(form.get("Body_Style_new"), 1.0, minimum=0)
 
     # types (multi-select)
     selected_types = form.getlist("types")
