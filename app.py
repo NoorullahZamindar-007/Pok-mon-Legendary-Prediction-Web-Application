@@ -17,7 +17,13 @@ except Exception:
     pass
 
 app = Flask(__name__)
-app.secret_key = "change-this-secret-key" 
+# Read the session-signing key from the environment so every deployment can
+# use its own secret. The fallback keeps local development working; set
+# SECRET_KEY in production because anyone with the default key can forge
+# session cookies.
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
+if app.secret_key == "change-this-secret-key":
+    print("WARNING: using the default Flask secret key; set the SECRET_KEY env var.") 
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "pokemon_model.pickle") 
 
