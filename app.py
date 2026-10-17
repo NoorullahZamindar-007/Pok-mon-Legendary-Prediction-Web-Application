@@ -222,4 +222,6 @@ def dashboard():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Debug mode only when explicitly enabled; the reloader and debugger
+    # must never run in production because they expose the Werkzeug console.
+    app.run(debug=os.environ.get("FLASK_DEBUG", "0") == "1")
