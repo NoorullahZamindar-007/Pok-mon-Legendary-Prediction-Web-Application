@@ -101,60 +101,108 @@ def to_float(val, default=0.0, minimum=None):
     return result
 
 
-def to_int(val, default=0):
+def to_int(val, default=0, minimum=None, maximum=None):
+    """Parse an integer form field, falling back to default on bad input.
+
+    minimum/maximum clamp the result, so a tampered form value cannot
+    smuggle out-of-range numbers into the model.
+    """
     try:
         if val is None or str(val).strip() == "":
-            return int(default)
-        return int(float(val))
+            result = int(default)
+        else:
+            result = int(float(val))
     except Exception:
-        return int(default)
+        result = int(default)
+    if minimum is not None:
+        result = max(minimum, result)
+    if maximum is not None:
+        result = min(maximum, result)
+    return result
+
+
+# Battle stats every trained model must provide; a model missing one of
+# these cannot produce a meaningful prediction.
+_REQUIRED_FEATURES = {
+    "Total",
+    "HP",
+    "Attack",
+    "Defense",
+    "Sp_Atk",
+    "Sp_Def",
+    "Speed",
+}
 
 
 def build_feature_vector(form, features):
     """
     Build a single-row feature vector in the exact order model expects.
+
+    Assignments are guarded by the model's actual feature list: if the
+    pickle was retrained with different features, a missing column raises
+    a clear error instead of a bare KeyError, and extra form fields are
+    ignored instead of crashing the prediction.
     """
-    x = {name: 0.0 for name in features}
+    known = set(features)
+
+    # The core battle stats must exist in the trained model; anything else
+    # degrades gracefully to its default below.
+    missing = sorted(n for n in _REQUIRED_FEATURES if n not in known)
+    if missing:
+        raise ValueError(
+            "The trained model is missing expected feature(s): "
+            + ", ".join(missing)
+            + ". Retrain it with Pokemon.ipynb."
+        )
+
+    values = {}
+
+    def put(name, value):
+        if name in known:
+            values[name] = value
 
     # numeric inputs
-    x["Total"] = to_float(form.get("Total"), 0, minimum=0)
-    x["HP"] = to_float(form.get("HP"), 0, minimum=0)
-    x["Attack"] = to_float(form.get("Attack"), 0, minimum=0)
-    x["Defense"] = to_float(form.get("Defense"), 0, minimum=0)
-    x["Sp_Atk"] = to_float(form.get("Sp_Atk"), 0, minimum=0)
-    x["Sp_Def"] = to_float(form.get("Sp_Def"), 0, minimum=0)
-    x["Speed"] = to_float(form.get("Speed"), 0, minimum=0)
+    put("Total", to_float(form.get("Total"), 0, minimum=0))
+    put("HP", to_float(form.get("HP"), 0, minimum=0))
+    put("Attack", to_float(form.get("Attack"), 0, minimum=0))
+    put("Defense", to_float(form.get("Defense"), 0, minimum=0))
+    put("Sp_Atk", to_float(form.get("Sp_Atk"), 0, minimum=0))
+    put("Sp_Def", to_float(form.get("Sp_Def"), 0, minimum=0))
+    put("Speed", to_float(form.get("Speed"), 0, minimum=0))
 
-    x["Generation"] = to_int(form.get("Generation"), 1)
+    # Generation is 1-based and only 8 generations exist; a tampered form
+    # value outside that range is clamped instead of reaching the model.
+    put("Generation", to_int(form.get("Generation"), 1, minimum=1, maximum=8))
 
     # bool-ish
-    x["hasGender"] = 1.0 if form.get("hasGender") == "on" else 0.0
-    x["hasMegaEvolution"] = 1.0 if form.get("hasMegaEvolution") == "on" else 0.0
+    put("hasGender", 1.0 if form.get("hasGender") == "on" else 0.0)
+    put("hasMegaEvolution", 1.0 if form.get("hasMegaEvolution") == "on" else 0.0)
 
     # proportion male (0..1)
-    x["Pr_Male"] = to_float(form.get("Pr_Male"), 0.5)
-    x["Pr_Male"] = max(0.0, min(1.0, x["Pr_Male"]))
+    pr_male = max(0.0, min(1.0, to_float(form.get("Pr_Male"), 0.5)))
+    put("Pr_Male", pr_male)
 
     # size + catch
-    x["Height_m"] = to_float(form.get("Height_m"), 1.0, minimum=0)
-    x["Weight_kg"] = to_float(form.get("Weight_kg"), 10.0, minimum=0)
-    x["Catch_Rate"] = to_float(form.get("Catch_Rate"), 45.0, minimum=0)
+    put("Height_m", to_float(form.get("Height_m"), 1.0, minimum=0))
+    put("Weight_kg", to_float(form.get("Weight_kg"), 10.0, minimum=0))
+    put("Catch_Rate", to_float(form.get("Catch_Rate"), 45.0, minimum=0))
 
     # Body_Style_new was frequency-encoded in your notebook
     # We accept it as a number. If user doesn't know, keep default.
-    x["Body_Style_new"] = to_float(form.get("Body_Style_new"), 1.0, minimum=0)
+    put("Body_Style_new", to_float(form.get("Body_Style_new"), 1.0, minimum=0))
 
     # types (multi-select)
     selected_types = form.getlist("types")
     for t in TYPE_FEATURES:
-        x[t] = 1.0 if t in selected_types else 0.0
+        put(t, 1.0 if t in selected_types else 0.0)
 
     # colors (single-select)
     selected_color = form.get("color")
     if selected_color in COLOR_FEATURES:
-        x[selected_color] = 1.0
+        put(selected_color, 1.0)
 
     # Return np array in correct column order
+    x = {name: values.get(name, 0.0) for name in features}
     return np.array([[x[name] for name in features]], dtype=float), x
 
 
