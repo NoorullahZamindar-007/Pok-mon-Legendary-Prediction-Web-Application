@@ -1,6 +1,7 @@
 import os
 import sys
-import pickle 
+import pickle
+import threading
 import numpy as np 
 from flask import Flask, render_template, request, redirect, url_for, flash 
  
@@ -32,6 +33,9 @@ MODEL_PATH = os.path.join(os.path.dirname(__file__), "pokemon_model.pickle")
 # Callers check get_model() and render a friendly 503 page when it fails.
 _model = None
 _model_error = None
+# Guards the lazy load: without it, two concurrent first requests could
+# both unpickle the model and race on the globals above.
+_model_lock = threading.Lock()
 
 
 def get_model():
@@ -43,20 +47,23 @@ def get_model():
     global _model, _model_error
     if _model is not None:
         return _model
-    # Not cached yet: retry the load on every call so that dropping the
-    # model file into place is enough to recover (no app restart needed).
-    _model_error = None
-    try:
-        with open(MODEL_PATH, "rb") as f:
-            _model = pickle.load(f)
-    except FileNotFoundError:
-        _model_error = (
-            f"Model file not found at {MODEL_PATH}. "
-            "Train the model with Pokemon.ipynb and place "
-            "pokemon_model.pickle next to app.py."
-        )
-    except Exception as exc:
-        _model_error = f"Could not load the model from {MODEL_PATH}: {exc}"
+    with _model_lock:
+        if _model is not None:
+            return _model
+        # Not cached yet: retry the load on every call so that dropping the
+        # model file into place is enough to recover (no app restart needed).
+        _model_error = None
+        try:
+            with open(MODEL_PATH, "rb") as f:
+                _model = pickle.load(f)
+        except FileNotFoundError:
+            _model_error = (
+                f"Model file not found at {MODEL_PATH}. "
+                "Train the model with Pokemon.ipynb and place "
+                "pokemon_model.pickle next to app.py."
+            )
+        except Exception as exc:
+            _model_error = f"Could not load the model from {MODEL_PATH}: {exc}"
     return _model
 
 
