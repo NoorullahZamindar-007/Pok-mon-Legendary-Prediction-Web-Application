@@ -236,8 +236,10 @@ def predict():
         proba = None
         if hasattr(model, "predict_proba"):
             p = model.predict_proba(X)[0]
-            # classes_ = [False, True]
-            idx_true = list(model.classes_).index(True) if True in list(model.classes_) else 1
+            # classes_ = [False, True]; True == 1, so index(True) finds the
+            # positive class whether it was stored as bool or int.
+            classes = list(model.classes_)
+            idx_true = classes.index(True) if True in classes else 1
             proba = float(p[idx_true])
 
         pred = bool(model.predict(X)[0])
@@ -279,4 +281,10 @@ def dashboard():
 if __name__ == "__main__":
     # Debug mode only when explicitly enabled; the reloader and debugger
     # must never run in production because they expose the Werkzeug console.
-    app.run(debug=os.environ.get("FLASK_DEBUG", "0") == "1")
+    # Host/port are overridable so container and PaaS hosts that assign $PORT
+    # (Render, Railway, ...) can start the app.
+    app.run(
+        host=os.environ.get("FLASK_HOST", "127.0.0.1"),
+        port=int(os.environ.get("PORT", "5000")),
+        debug=os.environ.get("FLASK_DEBUG", "0") == "1",
+    )
