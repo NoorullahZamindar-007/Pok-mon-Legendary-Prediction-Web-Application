@@ -177,9 +177,10 @@ def build_feature_vector(form, features):
     put("Sp_Def", to_float(form.get("Sp_Def"), 0, minimum=0))
     put("Speed", to_float(form.get("Speed"), 0, minimum=0))
 
-    # Generation is 1-based and only 8 generations exist; a tampered form
-    # value outside that range is clamped instead of reaching the model.
-    put("Generation", to_int(form.get("Generation"), 1, minimum=1, maximum=8))
+    # Generation is 1-based; nine generations exist since Scarlet/Violet
+    # (Gen 9, 2022). A tampered form value outside that range is clamped
+    # instead of reaching the model.
+    put("Generation", to_int(form.get("Generation"), 1, minimum=1, maximum=9))
 
     # bool-ish
     put("hasGender", 1.0 if form.get("hasGender") == "on" else 0.0)
