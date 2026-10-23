@@ -26,7 +26,16 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
 if app.secret_key == "change-this-secret-key":
     print("WARNING: using the default Flask secret key; set the SECRET_KEY env var.") 
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "pokemon_model.pickle") 
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "pokemon_model.pickle")
+
+
+def _env_int(name, default):
+    """Read an integer environment variable, falling back to *default* when
+    unset or malformed instead of crashing the app at startup."""
+    try:
+        return int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
 
 # Load the model lazily on first use instead of at import time, so a
 # missing or corrupt pickle no longer crashes the whole app on startup.
@@ -286,6 +295,8 @@ if __name__ == "__main__":
     # (Render, Railway, ...) can start the app.
     app.run(
         host=os.environ.get("FLASK_HOST", "127.0.0.1"),
-        port=int(os.environ.get("PORT", "5000")),
+        # A malformed PORT (e.g. "abc") used to crash the app at startup;
+        # fall back to 5000 instead.
+        port=_env_int("PORT", 5000),
         debug=os.environ.get("FLASK_DEBUG", "0") == "1",
     )
