@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import pickle
@@ -104,6 +105,8 @@ def to_float(val, default=0.0, minimum=None):
 
     minimum clamps the result from below; game stats and measurements can
     never be negative, so a tampered form value cannot poison the model.
+    Non-finite values (nan/inf) also fall back: float("nan") parses fine
+    but would otherwise flow straight into the model as a NaN feature.
     """
     try:
         if val is None or str(val).strip() == "":
@@ -111,6 +114,8 @@ def to_float(val, default=0.0, minimum=None):
         else:
             result = float(val)
     except Exception:
+        result = float(default)
+    if not math.isfinite(result):
         result = float(default)
     if minimum is not None:
         result = max(minimum, result)

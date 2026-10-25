@@ -67,6 +67,15 @@ FULL_FEATURES = [
 ]
 
 
+def test_to_float_rejects_non_finite_values():
+    # float("nan") / float("inf") parse successfully, so without an
+    # isfinite check they would reach the model as NaN/inf features.
+    assert app.to_float("nan", 0.0) == 0.0
+    assert app.to_float("inf", 0.0) == 0.0
+    assert app.to_float("-inf", 5.0) == 5.0
+    assert app.to_float("42.5", 0.0) == 42.5
+
+
 def test_to_int_clamps_to_range():
     assert app.to_int("99", 1, minimum=1, maximum=8) == 8
     assert app.to_int("-3", 1, minimum=1, maximum=8) == 1
