@@ -228,6 +228,24 @@ def build_feature_vector(form, features):
     return np.array([[x[name] for name in features]], dtype=float), x
 
 
+def positive_class_proba(proba_row, classes):
+    """Probability of the positive (True) class from a predict_proba row.
+
+    Returns None when the positive class cannot be determined. A model
+    trained on a single class has no positive-class column to index:
+    its probability is 1.0 if that class is the positive one, else 0.0.
+    The old inline code fell back to index 1 here, crashed with
+    IndexError, and lost the whole prediction to a redirect.
+    """
+    classes = list(classes)
+    if True in classes:
+        idx = classes.index(True)
+        return float(proba_row[idx]) if idx < len(proba_row) else None
+    if len(classes) == 1:
+        return 1.0 if classes[0] else 0.0
+    return None
+
+
 @app.route("/", methods=["GET"])
 def index():
     if get_model() is None:
@@ -251,11 +269,7 @@ def predict():
         proba = None
         if hasattr(model, "predict_proba"):
             p = model.predict_proba(X)[0]
-            # classes_ = [False, True]; True == 1, so index(True) finds the
-            # positive class whether it was stored as bool or int.
-            classes = list(model.classes_)
-            idx_true = classes.index(True) if True in classes else 1
-            proba = float(p[idx_true])
+            proba = positive_class_proba(p, model.classes_)
 
         pred = bool(model.predict(X)[0])
 

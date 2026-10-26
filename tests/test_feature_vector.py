@@ -159,3 +159,14 @@ if __name__ == "__main__":
     test_optional_missing_features_degrade_gracefully()
     test_env_int_falls_back_on_bad_values()
     print("all feature-vector tests pass")
+
+
+def test_positive_class_proba_handles_single_class_models():
+    # Normal two-class model: positive class is True, wherever it sits.
+    assert app.positive_class_proba([0.25, 0.75], [False, True]) == 0.75
+    assert app.positive_class_proba([0.9, 0.1], [True, False]) == 0.9
+    # Single-class models used to crash on a fallback index of 1.
+    assert app.positive_class_proba([1.0], [True]) == 1.0
+    assert app.positive_class_proba([1.0], [False]) == 0.0
+    # No positive class and no single class to infer from: unknown.
+    assert app.positive_class_proba([0.5, 0.5], [0, 2]) is None
