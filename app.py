@@ -240,7 +240,12 @@ def positive_class_proba(proba_row, classes):
     classes = list(classes)
     if True in classes:
         idx = classes.index(True)
-        return float(proba_row[idx]) if idx < len(proba_row) else None
+        if idx >= len(proba_row):
+            return None
+        # A NaN/inf probability is not a usable percentage: report it
+        # as unknown instead of rendering "nan%" on the result page.
+        value = float(proba_row[idx])
+        return value if math.isfinite(value) else None
     if len(classes) == 1:
         return 1.0 if classes[0] else 0.0
     return None

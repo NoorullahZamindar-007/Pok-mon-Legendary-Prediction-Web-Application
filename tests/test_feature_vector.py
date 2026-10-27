@@ -170,3 +170,6 @@ def test_positive_class_proba_handles_single_class_models():
     assert app.positive_class_proba([1.0], [False]) == 0.0
     # No positive class and no single class to infer from: unknown.
     assert app.positive_class_proba([0.5, 0.5], [0, 2]) is None
+    # A non-finite probability is unknown, not a renderable percentage.
+    assert app.positive_class_proba([float("nan"), 0.5], [False, True]) is None
+    assert app.positive_class_proba([0.5, float("inf")], [False, True]) is None
