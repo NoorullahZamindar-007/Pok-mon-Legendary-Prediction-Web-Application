@@ -100,10 +100,10 @@ COLOR_FEATURES = [
 ]
 
 
-def to_float(val, default=0.0, minimum=None):
+def to_float(val, default=0.0, minimum=None, maximum=None):
     """Parse a numeric form field, falling back to default on bad input.
 
-    minimum clamps the result from below; game stats and measurements can
+    minimum/maximum clamp the result; game stats and measurements can
     never be negative, so a tampered form value cannot poison the model.
     Non-finite values (nan/inf) also fall back: float("nan") parses fine
     but would otherwise flow straight into the model as a NaN feature.
@@ -119,6 +119,8 @@ def to_float(val, default=0.0, minimum=None):
         result = float(default)
     if minimum is not None:
         result = max(minimum, result)
+    if maximum is not None:
+        result = min(maximum, result)
     return result
 
 
@@ -207,7 +209,10 @@ def build_feature_vector(form, features):
     # size + catch
     put("Height_m", to_float(form.get("Height_m"), 1.0, minimum=0))
     put("Weight_kg", to_float(form.get("Weight_kg"), 10.0, minimum=0))
-    put("Catch_Rate", to_float(form.get("Catch_Rate"), 45.0, minimum=0))
+    # Catch rates in the games run 0..255; a tampered value above that is
+    # outside anything the model was trained on, so clamp it like
+    # Generation instead of feeding it straight to the model.
+    put("Catch_Rate", to_float(form.get("Catch_Rate"), 45.0, minimum=0, maximum=255))
 
     # Body_Style_new was frequency-encoded in your notebook
     # We accept it as a number. If user doesn't know, keep default.
