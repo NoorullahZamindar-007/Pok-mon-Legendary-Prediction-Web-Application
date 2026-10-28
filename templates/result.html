@@ -21,6 +21,13 @@
             <div class="result-sub">
               Probability (Legendary): <span class="fw-bold">{{ (proba*100) | round(2) }}%</span>
             </div>
+          {% else %}
+            {# A single-class or non-finite model gives no usable
+               probability; say so instead of silently omitting the line,
+               which looked like a missing result. #}
+            <div class="result-sub">
+              Probability (Legendary): <span class="fw-bold">unknown</span>
+            </div>
           {% endif %}
         </div>
 

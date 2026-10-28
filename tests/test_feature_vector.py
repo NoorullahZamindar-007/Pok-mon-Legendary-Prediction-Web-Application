@@ -85,6 +85,24 @@ def test_to_int_clamps_to_range():
     assert app.to_int(None, 1, minimum=1, maximum=8) == 1
 
 
+def test_to_float_clamps_to_maximum():
+    assert app.to_float("99999", 45.0, minimum=0, maximum=255) == 255.0
+    assert app.to_float("100", 45.0, minimum=0, maximum=255) == 100.0
+    assert app.to_float("-5", 45.0, minimum=0, maximum=255) == 0.0
+
+
+def test_catch_rate_clamped_to_game_range():
+    # Catch rates in the games run 0..255; a tampered value above that
+    # must not reach the model unclamped.
+    form = FakeForm({"Catch_Rate": "99999"})
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    assert x["Catch_Rate"] == 255.0
+
+    form = FakeForm({"Catch_Rate": "45"})
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    assert x["Catch_Rate"] == 45.0
+
+
 def test_generation_clamped_to_real_generations():
     form = FakeForm({"Generation": "25"})
     _, x = app.build_feature_vector(form, FULL_FEATURES)
