@@ -169,16 +169,6 @@ def test_env_int_falls_back_on_bad_values():
         os.environ.pop("POKEMON_TEST_PORT", None)
 
 
-if __name__ == "__main__":
-    test_to_int_clamps_to_range()
-    test_generation_clamped_to_real_generations()
-    test_feature_vector_shape_and_order()
-    test_missing_model_features_raise_clear_error()
-    test_optional_missing_features_degrade_gracefully()
-    test_env_int_falls_back_on_bad_values()
-    print("all feature-vector tests pass")
-
-
 def test_positive_class_proba_handles_single_class_models():
     # Normal two-class model: positive class is True, wherever it sits.
     assert app.positive_class_proba([0.25, 0.75], [False, True]) == 0.75
@@ -193,3 +183,17 @@ def test_positive_class_proba_handles_single_class_models():
     assert app.positive_class_proba([float("nan"), 0.5], [True, False]) is None
     assert app.positive_class_proba([0.5, float("inf")], [False, True]) is None
     assert app.positive_class_proba([float("nan"), 0.5], [False, True]) == 0.5
+
+
+if __name__ == "__main__":
+    # Kept at the end of the file: Python executes top to bottom, so a
+    # block placed earlier would run before later tests are defined and
+    # silently skip them on direct runs (pytest still collects them).
+    test_to_int_clamps_to_range()
+    test_generation_clamped_to_real_generations()
+    test_feature_vector_shape_and_order()
+    test_missing_model_features_raise_clear_error()
+    test_optional_missing_features_degrade_gracefully()
+    test_env_int_falls_back_on_bad_values()
+    test_positive_class_proba_handles_single_class_models()
+    print("all feature-vector tests pass")
