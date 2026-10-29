@@ -68,12 +68,12 @@ def get_model():
                 _model = pickle.load(f)
         except FileNotFoundError:
             _model_error = (
-                f"Model file not found at {MODEL_PATH}. "
+                f"Model file not found: {os.path.basename(MODEL_PATH)}. "
                 "Train the model with Pokemon.ipynb and place "
                 "pokemon_model.pickle next to app.py."
             )
         except Exception as exc:
-            _model_error = f"Could not load the model from {MODEL_PATH}: {exc}"
+            _model_error = f"Could not load the model from {os.path.basename(MODEL_PATH)}: {exc}"
     return _model
 
 
@@ -184,14 +184,16 @@ def build_feature_vector(form, features):
         if name in known:
             values[name] = value
 
-    # numeric inputs
-    put("Total", to_float(form.get("Total"), 0, minimum=0))
-    put("HP", to_float(form.get("HP"), 0, minimum=0))
-    put("Attack", to_float(form.get("Attack"), 0, minimum=0))
-    put("Defense", to_float(form.get("Defense"), 0, minimum=0))
-    put("Sp_Atk", to_float(form.get("Sp_Atk"), 0, minimum=0))
-    put("Sp_Def", to_float(form.get("Sp_Def"), 0, minimum=0))
-    put("Speed", to_float(form.get("Speed"), 0, minimum=0))
+    # numeric inputs; base stats are capped at 255 in the games, so
+    # Total cannot exceed 6 x 255 — a tampered value must not reach
+    # the model as a wildly out-of-distribution feature.
+    put("Total", to_float(form.get("Total"), 0, minimum=0, maximum=1530))
+    put("HP", to_float(form.get("HP"), 0, minimum=0, maximum=255))
+    put("Attack", to_float(form.get("Attack"), 0, minimum=0, maximum=255))
+    put("Defense", to_float(form.get("Defense"), 0, minimum=0, maximum=255))
+    put("Sp_Atk", to_float(form.get("Sp_Atk"), 0, minimum=0, maximum=255))
+    put("Sp_Def", to_float(form.get("Sp_Def"), 0, minimum=0, maximum=255))
+    put("Speed", to_float(form.get("Speed"), 0, minimum=0, maximum=255))
 
     # Generation is 1-based; nine generations exist since Scarlet/Violet
     # (Gen 9, 2022). A tampered form value outside that range is clamped
