@@ -76,6 +76,15 @@ def test_to_float_rejects_non_finite_values():
     assert app.to_float("42.5", 0.0) == 42.5
 
 
+def test_to_int_rejects_fractional_strings():
+    # "3.9" used to truncate silently to 3 via int(float(...)); a
+    # fractional string is not a valid integer input, so it must fall
+    # back to the default like any other unparseable value.
+    assert app.to_int("3.9", 1, minimum=1, maximum=9) == 1
+    assert app.to_int(" 4 ", 1, minimum=1, maximum=9) == 4
+    assert app.to_int("4.0", 1, minimum=1, maximum=9) == 1
+
+
 def test_to_int_clamps_to_range():
     assert app.to_int("99", 1, minimum=1, maximum=8) == 8
     assert app.to_int("-3", 1, minimum=1, maximum=8) == 1
@@ -190,6 +199,7 @@ if __name__ == "__main__":
     # block placed earlier would run before later tests are defined and
     # silently skip them on direct runs (pytest still collects them).
     test_to_int_clamps_to_range()
+    test_to_int_rejects_fractional_strings()
     test_generation_clamped_to_real_generations()
     test_feature_vector_shape_and_order()
     test_missing_model_features_raise_clear_error()

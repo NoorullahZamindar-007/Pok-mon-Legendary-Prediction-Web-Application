@@ -128,13 +128,16 @@ def to_int(val, default=0, minimum=None, maximum=None):
     """Parse an integer form field, falling back to default on bad input.
 
     minimum/maximum clamp the result, so a tampered form value cannot
-    smuggle out-of-range numbers into the model.
+    smuggle out-of-range numbers into the model. A fractional string
+    such as "3.9" is not a valid integer: the old int(float(val))
+    silently truncated it to 3, so it now falls back to default
+    instead of quietly changing the user's input.
     """
     try:
         if val is None or str(val).strip() == "":
             result = int(default)
         else:
-            result = int(float(val))
+            result = int(str(val).strip(), 10)
     except Exception:
         result = int(default)
     if minimum is not None:
