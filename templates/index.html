@@ -17,34 +17,34 @@
             </div>
             <div class="col-6">
               <label class="form-label">Catch Rate</label>
-              <input name="Catch_Rate" type="number" step="0.1" value="45" class="form-control">
+              <input name="Catch_Rate" type="number" step="0.1" min="0" max="255" value="45" class="form-control">
             </div>
 
-            <div class="col-6"><label class="form-label">Total</label><input name="Total" type="number" value="450" class="form-control"></div>
-            <div class="col-6"><label class="form-label">HP</label><input name="HP" type="number" value="60" class="form-control"></div>
-            <div class="col-6"><label class="form-label">Attack</label><input name="Attack" type="number" value="70" class="form-control"></div>
-            <div class="col-6"><label class="form-label">Defense</label><input name="Defense" type="number" value="60" class="form-control"></div>
-            <div class="col-6"><label class="form-label">Sp_Atk</label><input name="Sp_Atk" type="number" value="70" class="form-control"></div>
-            <div class="col-6"><label class="form-label">Sp_Def</label><input name="Sp_Def" type="number" value="60" class="form-control"></div>
-            <div class="col-6"><label class="form-label">Speed</label><input name="Speed" type="number" value="70" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Total</label><input name="Total" type="number" min="0" max="1530" value="450" class="form-control"></div>
+            <div class="col-6"><label class="form-label">HP</label><input name="HP" type="number" min="0" max="255" value="60" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Attack</label><input name="Attack" type="number" min="0" max="255" value="70" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Defense</label><input name="Defense" type="number" min="0" max="255" value="60" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Sp_Atk</label><input name="Sp_Atk" type="number" min="0" max="255" value="70" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Sp_Def</label><input name="Sp_Def" type="number" min="0" max="255" value="60" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Speed</label><input name="Speed" type="number" min="0" max="255" value="70" class="form-control"></div>
 
             <div class="col-6">
               <label class="form-label">Height (m)</label>
-              <input name="Height_m" type="number" step="0.01" value="1.0" class="form-control">
+              <input name="Height_m" type="number" step="0.01" min="0" value="1.0" class="form-control">
             </div>
             <div class="col-6">
               <label class="form-label">Weight (kg)</label>
-              <input name="Weight_kg" type="number" step="0.1" value="10" class="form-control">
+              <input name="Weight_kg" type="number" step="0.1" min="0" value="10" class="form-control">
             </div>
 
             <div class="col-6">
               <label class="form-label">Pr_Male (0..1)</label>
-              <input name="Pr_Male" type="number" step="0.01" value="0.5" class="form-control">
+              <input name="Pr_Male" type="number" step="0.01" min="0" max="1" value="0.5" class="form-control">
             </div>
 
             <div class="col-6">
               <label class="form-label">Body_Style_new</label>
-              <input name="Body_Style_new" type="number" step="0.01" value="1" class="form-control">
+              <input name="Body_Style_new" type="number" step="0.01" min="0" value="1" class="form-control">
               <div class="form-text">If unknown, keep default.</div>
             </div>
 
