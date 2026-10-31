@@ -48,13 +48,17 @@ pokemon-flask-app/
 │── app.py
 │── pokemon_model.pickle
 │── requirements.txt
+│── Pokemon.ipynb
 │
 ├── templates/
 │   ├── base.html
 │   ├── index.html
 │   ├── result.html
-│   └── dashboard.html
+│   ├── dashboard.html
+│   └── model_error.html
 │
+├── tests/
+│   └── test_feature_vector.py
 └── static/
 ├── css/
 │   └── style.css
@@ -68,14 +72,14 @@ pokemon-flask-app/
 1. Clone the repository:
 ```
 
-git clone [https://github.com/
+git clone https://github.com/NoorullahZamindar-007/Pok-mon-Legendary-Prediction-Web-Application.git
 
 ```
 
 2. Navigate to the project directory:
 ```
 
-cd pokemon-legendary-prediction
+cd Pok-mon-Legendary-Prediction-Web-Application
 
 ```
 
