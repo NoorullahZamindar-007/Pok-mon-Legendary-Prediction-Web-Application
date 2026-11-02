@@ -283,8 +283,15 @@ def predict():
 
         proba = None
         if hasattr(model, "predict_proba"):
-            p = model.predict_proba(X)[0]
-            proba = positive_class_proba(p, model.classes_)
+            # A model with predict_proba but no classes_ (e.g. an
+            # unfitted or non-classifier pickle) used to raise
+            # AttributeError here and lose the whole prediction to a
+            # redirect, even though predict() itself still works.
+            # Treat the probability as unknown and render the prediction.
+            classes = getattr(model, "classes_", None)
+            if classes is not None:
+                p = model.predict_proba(X)[0]
+                proba = positive_class_proba(p, classes)
 
         pred = bool(model.predict(X)[0])
 
