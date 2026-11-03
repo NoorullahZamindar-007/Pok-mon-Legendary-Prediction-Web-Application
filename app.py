@@ -261,6 +261,27 @@ def positive_class_proba(proba_row, classes):
     return None
 
 
+def safe_positive_proba(model, X):
+    """Probability of the positive class, or None when it cannot be computed.
+
+    A model with predict_proba but no classes_ already degrades to
+    unknown; a model whose predict_proba itself raises (unfitted
+    estimator, mismatched features) used to lose the whole prediction
+    to the error redirect even though predict() still works. The
+    probability is decorative — render the prediction without it.
+    """
+    if not hasattr(model, "predict_proba"):
+        return None
+    classes = getattr(model, "classes_", None)
+    if classes is None:
+        return None
+    try:
+        proba_row = model.predict_proba(X)[0]
+    except Exception:
+        return None
+    return positive_class_proba(proba_row, classes)
+
+
 @app.route("/", methods=["GET"])
 def index():
     if get_model() is None:
@@ -281,17 +302,7 @@ def predict():
     try:
         X, x_dict = build_feature_vector(request.form, get_features())
 
-        proba = None
-        if hasattr(model, "predict_proba"):
-            # A model with predict_proba but no classes_ (e.g. an
-            # unfitted or non-classifier pickle) used to raise
-            # AttributeError here and lose the whole prediction to a
-            # redirect, even though predict() itself still works.
-            # Treat the probability as unknown and render the prediction.
-            classes = getattr(model, "classes_", None)
-            if classes is not None:
-                p = model.predict_proba(X)[0]
-                proba = positive_class_proba(p, classes)
+        proba = safe_positive_proba(model, X)
 
         pred = bool(model.predict(X)[0])
 
