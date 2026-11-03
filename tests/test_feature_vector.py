@@ -206,4 +206,27 @@ if __name__ == "__main__":
     test_optional_missing_features_degrade_gracefully()
     test_env_int_falls_back_on_bad_values()
     test_positive_class_proba_handles_single_class_models()
+    test_safe_positive_proba_returns_none_when_predict_proba_raises()
     print("all feature-vector tests pass")
+
+
+class _RaisingProbaModel:
+    classes_ = [False, True]
+
+    def predict_proba(self, X):
+        raise RuntimeError("not fitted")
+
+
+class _WorkingProbaModel:
+    classes_ = [False, True]
+
+    def predict_proba(self, X):
+        return [[0.2, 0.8]]
+
+
+def test_safe_positive_proba_returns_none_when_predict_proba_raises():
+    # A predict_proba failure must not lose the prediction: the route
+    # renders it with an unknown probability instead of redirecting.
+    assert app.safe_positive_proba(_RaisingProbaModel(), [[0.0]]) is None
+    assert app.safe_positive_proba(_WorkingProbaModel(), [[0.0]]) == 0.8
+    assert app.safe_positive_proba(object(), [[0.0]]) is None
