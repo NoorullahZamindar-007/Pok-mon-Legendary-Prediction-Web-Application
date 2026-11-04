@@ -327,7 +327,17 @@ def dashboard():
     labels = []
     values = []
     if hasattr(model, "feature_importances_") and len(features) == len(model.feature_importances_):
-        pairs = list(zip(features, model.feature_importances_))
+        # Drop non-finite importances (NaN/inf from a degenerate model):
+        # they sort unpredictably and render as "nan" on the dashboard
+        # chart, while a finite-only list still ranks the real features.
+        pairs = []
+        for name, importance in zip(features, model.feature_importances_):
+            try:
+                value = float(importance)
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(value):
+                pairs.append((name, value))
         pairs.sort(key=lambda x: x[1], reverse=True)
         top = pairs[:12]
         labels = [p[0] for p in top]
