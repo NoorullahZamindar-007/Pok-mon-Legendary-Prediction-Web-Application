@@ -38,6 +38,23 @@ def _env_int(name, default):
     except (TypeError, ValueError):
         return default
 
+
+def _valid_port(port, default=5000):
+    """Return a usable TCP port, falling back to *default* when the
+    configured value is out of range.
+
+    A PORT of 0 asks the OS for a random port the user cannot find, and
+    a negative or >65535 value crashes app.run at startup; a typo like
+    70000 used to kill the app instead of starting on the default port.
+    """
+    try:
+        port = int(port)
+    except (TypeError, ValueError):
+        return default
+    if 1 <= port <= 65535:
+        return port
+    return default
+
 # Load the model lazily on first use instead of at import time, so a
 # missing or corrupt pickle no longer crashes the whole app on startup.
 # Callers check get_model() and render a friendly 503 page when it fails.
@@ -358,7 +375,8 @@ if __name__ == "__main__":
     app.run(
         host=os.environ.get("FLASK_HOST", "127.0.0.1"),
         # A malformed PORT (e.g. "abc") used to crash the app at startup;
-        # fall back to 5000 instead.
-        port=_env_int("PORT", 5000),
+        # fall back to 5000 instead. _valid_port also rejects out-of-range
+        # values (0, negative, >65535) that would crash app.run.
+        port=_valid_port(_env_int("PORT", 5000)),
         debug=os.environ.get("FLASK_DEBUG", "0") == "1",
     )

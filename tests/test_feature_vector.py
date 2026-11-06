@@ -178,6 +178,21 @@ def test_env_int_falls_back_on_bad_values():
         os.environ.pop("POKEMON_TEST_PORT", None)
 
 
+def test_valid_port_rejects_out_of_range_values():
+    # A PORT typo used to crash app.run at startup instead of starting
+    # on the default port; 0 would bind a random port the user cannot find.
+    assert app._valid_port(5000) == 5000
+    assert app._valid_port(8080) == 8080
+    assert app._valid_port(1) == 1
+    assert app._valid_port(65535) == 65535
+    assert app._valid_port(0) == 5000
+    assert app._valid_port(-1) == 5000
+    assert app._valid_port(65536) == 5000
+    assert app._valid_port(70000) == 5000
+    assert app._valid_port("abc") == 5000
+    assert app._valid_port(None) == 5000
+
+
 def test_positive_class_proba_handles_single_class_models():
     # Normal two-class model: positive class is True, wherever it sits.
     assert app.positive_class_proba([0.25, 0.75], [False, True]) == 0.75
