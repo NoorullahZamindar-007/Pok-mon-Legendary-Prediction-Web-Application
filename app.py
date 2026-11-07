@@ -294,9 +294,24 @@ def safe_positive_proba(model, X):
         return None
     try:
         proba_row = model.predict_proba(X)[0]
+        # The row conversion itself can fail too: a model returning a
+        # 1-D array makes [0] a scalar, and positive_class_proba then
+        # raises TypeError on len() — the same lost-prediction failure
+        # as a raising predict_proba, so it belongs inside this try.
+        return positive_class_proba(proba_row, classes)
     except Exception:
         return None
-    return positive_class_proba(proba_row, classes)
+
+
+def interpret_prediction(prediction) -> bool:
+    """Interpret a raw model prediction as a boolean.
+
+    bool("False") is True, so a model retrained with string labels
+    would render every "Not Legendary" prediction as Legendary.
+    """
+    if isinstance(prediction, str):
+        return prediction.strip().lower() in {"true", "1", "yes", "legendary"}
+    return bool(prediction)
 
 
 @app.route("/", methods=["GET"])
@@ -321,7 +336,10 @@ def predict():
 
         proba = safe_positive_proba(model, X)
 
-        pred = bool(model.predict(X)[0])
+        # Interpret the raw label explicitly: bool("False") is True,
+        # so a model retrained with string labels would otherwise
+        # render every "Not Legendary" prediction as Legendary.
+        pred = interpret_prediction(model.predict(X)[0])
 
         return render_template(
             "result.html",

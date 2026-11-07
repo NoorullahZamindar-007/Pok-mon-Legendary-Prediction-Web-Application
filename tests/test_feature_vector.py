@@ -245,3 +245,31 @@ def test_safe_positive_proba_returns_none_when_predict_proba_raises():
     assert app.safe_positive_proba(_RaisingProbaModel(), [[0.0]]) is None
     assert app.safe_positive_proba(_WorkingProbaModel(), [[0.0]]) == 0.8
     assert app.safe_positive_proba(object(), [[0.0]]) is None
+
+
+class _OneDimensionalProbaModel:
+    classes_ = [False, True]
+
+    def predict_proba(self, X):
+        # A 1-D row instead of a (1, 2) row: [0] is a scalar float, and
+        # positive_class_proba used to raise TypeError on len() outside
+        # the try, losing a prediction predict() could have rendered.
+        return [0.2, 0.8]
+
+
+def test_safe_positive_proba_returns_none_for_1d_proba_row():
+    assert app.safe_positive_proba(_OneDimensionalProbaModel(), [[0.0]]) is None
+
+
+def test_interpret_prediction_handles_string_labels():
+    # bool("False") is True, so string labels must be read explicitly.
+    assert app.interpret_prediction(True) is True
+    assert app.interpret_prediction(False) is False
+    assert app.interpret_prediction(1) is True
+    assert app.interpret_prediction(0) is False
+    assert app.interpret_prediction("True") is True
+    assert app.interpret_prediction("False") is False
+    assert app.interpret_prediction("false") is False
+    assert app.interpret_prediction("1") is True
+    assert app.interpret_prediction("0") is False
+    assert app.interpret_prediction("maybe") is False
