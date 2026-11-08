@@ -209,22 +209,6 @@ def test_positive_class_proba_handles_single_class_models():
     assert app.positive_class_proba([float("nan"), 0.5], [False, True]) == 0.5
 
 
-if __name__ == "__main__":
-    # Kept at the end of the file: Python executes top to bottom, so a
-    # block placed earlier would run before later tests are defined and
-    # silently skip them on direct runs (pytest still collects them).
-    test_to_int_clamps_to_range()
-    test_to_int_rejects_fractional_strings()
-    test_generation_clamped_to_real_generations()
-    test_feature_vector_shape_and_order()
-    test_missing_model_features_raise_clear_error()
-    test_optional_missing_features_degrade_gracefully()
-    test_env_int_falls_back_on_bad_values()
-    test_positive_class_proba_handles_single_class_models()
-    test_safe_positive_proba_returns_none_when_predict_proba_raises()
-    print("all feature-vector tests pass")
-
-
 class _RaisingProbaModel:
     classes_ = [False, True]
 
@@ -273,3 +257,16 @@ def test_interpret_prediction_handles_string_labels():
     assert app.interpret_prediction("1") is True
     assert app.interpret_prediction("0") is False
     assert app.interpret_prediction("maybe") is False
+
+
+if __name__ == "__main__":
+    # Kept at the end of the file: Python executes top to bottom, so a
+    # block placed earlier runs before later tests are defined — the old
+    # hand-listed block crashed on a not-yet-defined test and silently
+    # skipped six others on direct runs (pytest still collected them).
+    # Auto-discover every test_* function so a new test can never be
+    # missed from the direct run again.
+    for _name, _func in sorted(globals().items()):
+        if _name.startswith("test_") and callable(_func):
+            _func()
+    print("all feature-vector tests pass")
