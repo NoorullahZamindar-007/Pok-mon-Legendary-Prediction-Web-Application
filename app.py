@@ -228,9 +228,11 @@ def build_feature_vector(form, features):
     pr_male = max(0.0, min(1.0, to_float(form.get("Pr_Male"), 0.5)))
     put("Pr_Male", pr_male)
 
-    # size + catch
-    put("Height_m", to_float(form.get("Height_m"), 1.0, minimum=0))
-    put("Weight_kg", to_float(form.get("Weight_kg"), 10.0, minimum=0))
+    # size + catch: the tallest/heaviest real Pokemon are ~20 m / ~1000 kg,
+    # so generous caps keep tampered values from reaching the model as
+    # wildly out-of-distribution features, like the other numeric fields.
+    put("Height_m", to_float(form.get("Height_m"), 1.0, minimum=0, maximum=30))
+    put("Weight_kg", to_float(form.get("Weight_kg"), 10.0, minimum=0, maximum=1000))
     # Catch rates in the games run 0..255; a tampered value above that is
     # outside anything the model was trained on, so clamp it like
     # Generation instead of feeding it straight to the model.
@@ -240,8 +242,10 @@ def build_feature_vector(form, features):
     # We accept it as a number. If user doesn't know, keep default.
     put("Body_Style_new", to_float(form.get("Body_Style_new"), 1.0, minimum=0))
 
-    # types (multi-select)
-    selected_types = form.getlist("types")
+    # types (multi-select): real Pokemon have at most two types, so an
+    # 11-hot vector is input the model never saw in training. Keep only
+    # the first two selected types, in TYPE_FEATURES order.
+    selected_types = [t for t in TYPE_FEATURES if t in form.getlist("types")][:2]
     for t in TYPE_FEATURES:
         put(t, 1.0 if t in selected_types else 0.0)
 

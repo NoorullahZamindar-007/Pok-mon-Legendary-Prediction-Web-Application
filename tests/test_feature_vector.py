@@ -100,6 +100,30 @@ def test_to_float_clamps_to_maximum():
     assert app.to_float("-5", 45.0, minimum=0, maximum=255) == 0.0
 
 
+def test_height_and_weight_clamped_to_plausible_ranges():
+    # The tallest/heaviest real Pokemon are ~20 m / ~1000 kg; a tampered
+    # value above that must not reach the model unclamped.
+    form = FakeForm({"Height_m": "1000000000", "Weight_kg": "1e9"})
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    assert x["Height_m"] == 30.0
+    assert x["Weight_kg"] == 1000.0
+
+    form = FakeForm({"Height_m": "1.7", "Weight_kg": "90.5"})
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    assert x["Height_m"] == 1.7
+    assert x["Weight_kg"] == 90.5
+
+
+def test_only_first_two_types_are_encoded():
+    # Real Pokemon have at most two types; ticking more must not produce
+    # an 11-hot vector the model never saw in training.
+    form = FakeForm({"types": ["Fire", "Water", "Grass", "Electric"]})
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    # First two in TYPE_FEATURES order, not form order.
+    assert x["Electric"] == 1.0 and x["Fire"] == 1.0
+    assert x["Grass"] == 0.0 and x["Water"] == 0.0
+
+
 def test_catch_rate_clamped_to_game_range():
     # Catch rates in the games run 0..255; a tampered value above that
     # must not reach the model unclamped.
