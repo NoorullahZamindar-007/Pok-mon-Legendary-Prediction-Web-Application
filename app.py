@@ -259,6 +259,22 @@ def build_feature_vector(form, features):
     return np.array([[x[name] for name in features]], dtype=float), x
 
 
+def _is_positive_label(value):
+    """True when a class label means the positive (Legendary) class.
+
+    String labels are read explicitly (bool("False") is True), and a
+    numeric label counts only when it equals 1: a two-class model with
+    labels [0, 2] has no identifiable positive class, so its
+    probability stays unknown instead of picking column 1.
+    """
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "1", "yes", "legendary"}
+    try:
+        return bool(value == 1)
+    except Exception:
+        return False
+
+
 def positive_class_proba(proba_row, classes):
     """Probability of the positive (True) class from a predict_proba row.
 
@@ -269,16 +285,27 @@ def positive_class_proba(proba_row, classes):
     IndexError, and lost the whole prediction to a redirect.
     """
     classes = list(classes)
-    if True in classes:
-        idx = classes.index(True)
-        if idx >= len(proba_row):
+    # String labels need the same explicit reading as predictions:
+    # `True in ["False", "True"]` is False, so a retrained model with
+    # string labels used to report its probability as unknown even
+    # though predict_proba returned a usable row.
+    positive_idx = next(
+        (i for i, label in enumerate(classes) if _is_positive_label(label)),
+        None,
+    )
+    if positive_idx is not None:
+        if positive_idx >= len(proba_row):
             return None
         # A NaN/inf probability is not a usable percentage: report it
         # as unknown instead of rendering "nan%" on the result page.
-        value = float(proba_row[idx])
+        value = float(proba_row[positive_idx])
         return value if math.isfinite(value) else None
     if len(classes) == 1:
-        return 1.0 if classes[0] else 0.0
+        # No positive label among a single class means that class is
+        # the negative one (e.g. ["False"]): its Legendary probability
+        # is 0.0. The old `1.0 if classes[0] else 0.0` read
+        # bool("False") as True and reported 1.0 instead.
+        return 0.0
     return None
 
 

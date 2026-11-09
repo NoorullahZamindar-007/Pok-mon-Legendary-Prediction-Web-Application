@@ -283,6 +283,25 @@ def test_interpret_prediction_handles_string_labels():
     assert app.interpret_prediction("maybe") is False
 
 
+def test_positive_class_proba_handles_string_labels():
+    # A model retrained with string labels used to report the
+    # probability as unknown: `True in ["False", "True"]` is False,
+    # so no positive column was ever found even though predict_proba
+    # returned a usable row.
+    assert app.positive_class_proba([0.2, 0.8], ["False", "True"]) == 0.8
+    assert app.positive_class_proba([0.8, 0.2], ["True", "False"]) == 0.8
+    assert app.positive_class_proba([0.2, 0.8], ["0", "1"]) == 0.8
+    # bool and numeric labels keep working as before
+    assert app.positive_class_proba([0.2, 0.8], [False, True]) == 0.8
+    assert app.positive_class_proba([0.2, 0.8], [0, 1]) == 0.8
+    # single-class string models: ["False"] is the negative class, so
+    # its Legendary probability is 0.0, not 1.0 (bool("False") is True).
+    assert app.positive_class_proba([1.0], ["False"]) == 0.0
+    assert app.positive_class_proba([1.0], ["True"]) == 1.0
+    assert app.positive_class_proba([1.0], [False]) == 0.0
+    assert app.positive_class_proba([1.0], [True]) == 1.0
+
+
 if __name__ == "__main__":
     # Kept at the end of the file: Python executes top to bottom, so a
     # block placed earlier runs before later tests are defined — the old
