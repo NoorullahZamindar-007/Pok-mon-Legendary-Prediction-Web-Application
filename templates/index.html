@@ -30,11 +30,11 @@
 
             <div class="col-6">
               <label class="form-label">Height (m)</label>
-              <input name="Height_m" type="number" step="0.01" min="0" value="1.0" class="form-control">
+              <input name="Height_m" type="number" step="0.01" min="0" max="30" value="1.0" class="form-control">
             </div>
             <div class="col-6">
               <label class="form-label">Weight (kg)</label>
-              <input name="Weight_kg" type="number" step="0.1" min="0" value="10" class="form-control">
+              <input name="Weight_kg" type="number" step="0.1" min="0" max="1000" value="10" class="form-control">
             </div>
 
             <div class="col-6">
@@ -72,7 +72,8 @@
             </div>
 
             <div class="col-12">
-              <label class="form-label">Types (select one or more)</label>
+              <label class="form-label">Types (pick up to two)</label>
+              <div class="form-text mb-2">Pokemon have at most two types - only the first two selected are used.</div>
               <div class="type-grid">
                 {% for t in type_features %}
                   <label class="type-pill">
