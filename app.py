@@ -388,32 +388,48 @@ def dashboard():
     model = get_model()
     if model is None:
         return model_unavailable()
-    features = get_features()
-    # Feature importances (if available)
-    labels = []
-    values = []
-    if hasattr(model, "feature_importances_") and len(features) == len(model.feature_importances_):
-        # Drop non-finite importances (NaN/inf from a degenerate model):
-        # they sort unpredictably and render as "nan" on the dashboard
-        # chart, while a finite-only list still ranks the real features.
-        pairs = []
-        for name, importance in zip(features, model.feature_importances_):
-            try:
-                value = float(importance)
-            except (TypeError, ValueError):
-                continue
-            if math.isfinite(value):
-                pairs.append((name, value))
-        pairs.sort(key=lambda x: x[1], reverse=True)
-        top = pairs[:12]
-        labels = [p[0] for p in top]
-        values = [float(p[1]) for p in top]
+    labels, values = top_feature_importances(model, get_features())
 
     return render_template(
         "dashboard.html",
         top_labels=labels,
         top_values=values
     )
+
+
+def top_feature_importances(model, features, limit=12):
+    """Top *limit* (feature, importance) pairs, most important first.
+
+    Returns ([], []) when the model has no usable importances, so the
+    dashboard shows its "not available" warning. A retrained estimator
+    can expose feature_importances_ as a scalar (or another unexpected
+    shape): len() on it used to raise TypeError inside the route and
+    crash /dashboard with a 500. Non-finite importances (NaN/inf from
+    a degenerate model) are dropped: they sort unpredictably and render
+    as "nan" on the chart, while a finite-only list still ranks the
+    real features.
+    """
+    importances = getattr(model, "feature_importances_", None)
+    if importances is None:
+        return [], []
+    try:
+        if len(features) != len(importances):
+            return [], []
+        pairs = []
+        for name, importance in zip(features, importances):
+            try:
+                value = float(importance)
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(value):
+                pairs.append((name, value))
+    except TypeError:
+        # feature_importances_ is a scalar or otherwise unsized: there
+        # is no per-feature list to rank, so report "not available".
+        return [], []
+    pairs.sort(key=lambda x: x[1], reverse=True)
+    top = pairs[:limit]
+    return [p[0] for p in top], [float(p[1]) for p in top]
 
 
 if __name__ == "__main__":

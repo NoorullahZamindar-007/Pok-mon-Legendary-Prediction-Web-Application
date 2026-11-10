@@ -302,6 +302,46 @@ def test_positive_class_proba_handles_string_labels():
     assert app.positive_class_proba([1.0], [True]) == 1.0
 
 
+class _ScalarImportanceModel:
+    feature_names_in_ = ["Total", "HP"]
+    feature_importances_ = 0.5
+
+
+class _RankedImportanceModel:
+    feature_names_in_ = ["Total", "HP", "Attack"]
+    feature_importances_ = [0.1, float("nan"), 0.9]
+
+
+def test_top_feature_importances_handles_scalar_importances():
+    # A retrained estimator can expose feature_importances_ as a scalar;
+    # len() on it used to raise TypeError inside the dashboard route and
+    # crash /dashboard with a 500 instead of the "not available" warning.
+    assert app.top_feature_importances(_ScalarImportanceModel(), ["Total", "HP"]) == ([], [])
+
+
+def test_top_feature_importances_ranks_and_drops_non_finite():
+    labels, values = app.top_feature_importances(
+        _RankedImportanceModel(), ["Total", "HP", "Attack"]
+    )
+    assert labels == ["Attack", "Total"]
+    assert values == [0.9, 0.1]
+    # Length mismatch: no usable ranking.
+    assert app.top_feature_importances(_RankedImportanceModel(), ["Total"]) == ([], [])
+    # No importances attribute at all.
+    assert app.top_feature_importances(object(), ["Total"]) == ([], [])
+
+
+def test_dashboard_degrades_gracefully_for_scalar_importances():
+    # End-to-end through the route: a scalar-importance model must render
+    # (stubbed render_template returns ""), not raise.
+    previous = app._model
+    app._model = _ScalarImportanceModel()
+    try:
+        assert app.dashboard() == ""
+    finally:
+        app._model = previous
+
+
 if __name__ == "__main__":
     # Kept at the end of the file: Python executes top to bottom, so a
     # block placed earlier runs before later tests are defined — the old
