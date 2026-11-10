@@ -104,6 +104,35 @@ python app.py
 
 ```
 
+## Configuration
+
+| Variable      | Default       | Purpose                                                              |
+|---------------|---------------|----------------------------------------------------------------------|
+| `SECRET_KEY`  | dev key       | Flask session signing key (set a real one in production)             |
+| `PORT`        | `5000`        | Port the app listens on (invalid or out-of-range values fall back to 5000) |
+| `FLASK_HOST`  | `127.0.0.1`   | Host interface to bind                                               |
+| `FLASK_DEBUG` | `0`           | Set to `1` to enable Flask debug mode locally                        |
+
+The model loads lazily on first use: if `pokemon_model.pickle` is missing
+or corrupt, the app still starts and shows a friendly error page instead
+of crashing.
+
+## Running tests
+
+```bash
+pip install pytest
+python -m pytest tests/
+```
+
+The suite covers form parsing and feature-vector building (clamping of
+out-of-range inputs, string-label handling, probability helpers) and the
+dashboard's feature-importance handling. It also runs directly without
+pytest:
+
+```bash
+python tests/test_feature_vector.py
+```
+
 ## Usage
 
 - Enter Pokémon attributes in the input form
