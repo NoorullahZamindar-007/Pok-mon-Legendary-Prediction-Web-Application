@@ -378,8 +378,15 @@ def predict():
             proba=proba,
             input_data=x_dict
         )
-    except Exception as e:
+    except ValueError as e:
+        # ValueErrors from build_feature_vector are already user-friendly
+        # (e.g. missing model features), so show them as-is.
         flash(f"Prediction error: {e}")
+        return redirect(url_for("index"))
+    except Exception:
+        # Anything else is a server-internal failure (sklearn/pickle):
+        # do not flash raw exception text to the user.
+        flash("Prediction failed — please try again.")
         return redirect(url_for("index"))
 
 
