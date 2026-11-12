@@ -347,13 +347,15 @@ def interpret_prediction(prediction) -> bool:
 
 @app.route("/", methods=["GET"])
 def index():
-    if get_model() is None:
+    model = get_model()
+    if model is None:
         return model_unavailable()
     return render_template(
         "index.html",
         features=get_features(),
         type_features=TYPE_FEATURES,
-        color_features=COLOR_FEATURES
+        color_features=COLOR_FEATURES,
+        model_name=type(model).__name__
     )
 
 
@@ -400,7 +402,8 @@ def dashboard():
     return render_template(
         "dashboard.html",
         top_labels=labels,
-        top_values=values
+        top_values=values,
+        model_name=type(model).__name__
     )
 
 
