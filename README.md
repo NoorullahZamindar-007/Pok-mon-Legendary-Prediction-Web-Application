@@ -60,10 +60,10 @@ pokemon-flask-app/
 ├── tests/
 │   └── test_feature_vector.py
 └── static/
-├── css/
-│   └── style.css
-└── js/
-└── app.js
+    ├── css/
+    │   └── style.css
+    └── js/
+        └── app.js
 
 ```
 
