@@ -136,6 +136,19 @@ def test_catch_rate_clamped_to_game_range():
     assert x["Catch_Rate"] == 45.0
 
 
+def test_body_style_clamped_to_dataset_size():
+    # Body_Style_new is a frequency count (Pokemon sharing that body
+    # style), so real values run ~1-800 and the dataset holds ~1000
+    # Pokemon; a tampered value above that must not reach the model.
+    form = FakeForm({"Body_Style_new": "99999"})
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    assert x["Body_Style_new"] == 1000.0
+
+    form = FakeForm({"Body_Style_new": "12"})
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    assert x["Body_Style_new"] == 12.0
+
+
 def test_generation_clamped_to_real_generations():
     form = FakeForm({"Generation": "25"})
     _, x = app.build_feature_vector(form, FULL_FEATURES)

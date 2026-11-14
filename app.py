@@ -238,9 +238,11 @@ def build_feature_vector(form, features):
     # Generation instead of feeding it straight to the model.
     put("Catch_Rate", to_float(form.get("Catch_Rate"), 45.0, minimum=0, maximum=255))
 
-    # Body_Style_new was frequency-encoded in your notebook
-    # We accept it as a number. If user doesn't know, keep default.
-    put("Body_Style_new", to_float(form.get("Body_Style_new"), 1.0, minimum=0))
+    # Body_Style_new was frequency-encoded in your notebook (how many
+    # Pokemon share that body style), so real values run ~1-800 and the
+    # dataset holds ~1000 Pokemon; cap it like the other numeric fields
+    # so a tampered value cannot reach the model out-of-distribution.
+    put("Body_Style_new", to_float(form.get("Body_Style_new"), 1.0, minimum=0, maximum=1000))
 
     # types (multi-select): real Pokemon have at most two types, so an
     # 11-hot vector is input the model never saw in training. Keep only
