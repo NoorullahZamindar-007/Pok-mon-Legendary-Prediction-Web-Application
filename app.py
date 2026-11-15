@@ -368,30 +368,33 @@ def predict():
         return model_unavailable()
     try:
         X, x_dict = build_feature_vector(request.form, get_features())
-
+    except ValueError as e:
+        # ValueErrors from build_feature_vector are already user-friendly
+        # (e.g. missing model features), so show them as-is.
+        flash(f"Prediction error: {e}")
+        return redirect(url_for("index"))
+    try:
         proba = safe_positive_proba(model, X)
 
         # Interpret the raw label explicitly: bool("False") is True,
         # so a model retrained with string labels would otherwise
         # render every "Not Legendary" prediction as Legendary.
         pred = interpret_prediction(model.predict(X)[0])
-
-        return render_template(
-            "result.html",
-            pred=pred,
-            proba=proba,
-            input_data=x_dict
-        )
-    except ValueError as e:
-        # ValueErrors from build_feature_vector are already user-friendly
-        # (e.g. missing model features), so show them as-is.
-        flash(f"Prediction error: {e}")
-        return redirect(url_for("index"))
     except Exception:
-        # Anything else is a server-internal failure (sklearn/pickle):
-        # do not flash raw exception text to the user.
+        # A failure inside the model itself (e.g. a retrained pickle
+        # whose predict raises ValueError over a feature-count
+        # mismatch) must not flash the raw sklearn message: it leaks
+        # server internals and means nothing to the user. The build
+        # step above is the only place a ValueError is user-friendly.
         flash("Prediction failed — please try again.")
         return redirect(url_for("index"))
+
+    return render_template(
+        "result.html",
+        pred=pred,
+        proba=proba,
+        input_data=x_dict
+    )
 
 
 @app.route("/dashboard", methods=["GET"])

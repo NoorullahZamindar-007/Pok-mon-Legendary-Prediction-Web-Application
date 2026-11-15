@@ -355,6 +355,75 @@ def test_dashboard_degrades_gracefully_for_scalar_importances():
         app._model = previous
 
 
+def test_predict_hides_model_valueerror_from_user():
+    # A retrained pickle whose predict() raises ValueError (e.g. a
+    # feature-count mismatch) used to flash the raw sklearn message to
+    # the user; only build_feature_vector errors are user-friendly.
+    # The stubbed Flask harness: capture flash, feed an empty form
+    # (defaults fill the vector), and restore module state afterwards.
+    import types as _types
+
+    class _MismatchModel:
+        feature_names_in_ = FULL_FEATURES
+        classes_ = [False, True]
+
+        def predict_proba(self, X):
+            return [[0.2, 0.8]]
+
+        def predict(self, X):
+            raise ValueError(
+                "X has 37 features, but RandomForestClassifier is expecting 42"
+            )
+
+    messages = []
+    previous_model = app._model
+    previous_form = app.request.form
+    previous_flash = app.flash
+    app._model = _MismatchModel()
+    app.request.form = FakeForm({})
+    app.flash = lambda message, *a, **k: messages.append(message)
+    try:
+        app.predict()
+    finally:
+        app._model = previous_model
+        app.request.form = previous_form
+        app.flash = previous_flash
+    assert len(messages) == 1
+    assert messages[0] == "Prediction failed — please try again."
+    assert "RandomForestClassifier" not in messages[0]
+    assert "37 features" not in messages[0]
+
+
+def test_predict_still_shows_friendly_build_errors():
+    # The split must not swallow the friendly message: a model missing
+    # a required feature still reports it by name.
+    class _MissingFeatureModel:
+        feature_names_in_ = [f for f in FULL_FEATURES if f != "Total"]
+        classes_ = [False, True]
+
+        def predict_proba(self, X):
+            return [[0.2, 0.8]]
+
+        def predict(self, X):
+            return [True]
+
+    messages = []
+    previous_model = app._model
+    previous_form = app.request.form
+    previous_flash = app.flash
+    app._model = _MissingFeatureModel()
+    app.request.form = FakeForm({})
+    app.flash = lambda message, *a, **k: messages.append(message)
+    try:
+        app.predict()
+    finally:
+        app._model = previous_model
+        app.request.form = previous_form
+        app.flash = previous_flash
+    assert len(messages) == 1
+    assert "Total" in messages[0]
+
+
 if __name__ == "__main__":
     # Kept at the end of the file: Python executes top to bottom, so a
     # block placed earlier runs before later tests are defined — the old
