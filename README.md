@@ -44,7 +44,7 @@ The model outputs both the predicted class and the probability of a Pokémon bei
 
 ```
 
-pokemon-flask-app/
+Pok-mon-Legendary-Prediction-Web-Application/
 │── app.py
 │── pokemon_model.pickle
 │── requirements.txt
