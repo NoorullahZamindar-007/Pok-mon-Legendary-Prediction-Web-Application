@@ -347,6 +347,25 @@ def interpret_prediction(prediction) -> bool:
     return bool(prediction)
 
 
+def first_prediction(model, X):
+    """First prediction from model.predict, tolerating scalar returns.
+
+    sklearn predict() normally returns a 1-element array, but a
+    retrained or custom model can return a 0-d array or a bare scalar,
+    and [0] on those raises IndexError/TypeError and loses the
+    prediction to the generic error page even though the model
+    answered. An empty result (or None) is still an error: there is
+    no prediction to render.
+    """
+    result = np.asarray(model.predict(X)).ravel()
+    if result.size == 0:
+        raise ValueError("Model returned no prediction.")
+    value = result[0]
+    if value is None:
+        raise ValueError("Model returned no prediction.")
+    return value
+
+
 @app.route("/", methods=["GET"])
 def index():
     model = get_model()
@@ -379,7 +398,8 @@ def predict():
         # Interpret the raw label explicitly: bool("False") is True,
         # so a model retrained with string labels would otherwise
         # render every "Not Legendary" prediction as Legendary.
-        pred = interpret_prediction(model.predict(X)[0])
+        # first_prediction also tolerates a scalar/0-d predict return.
+        pred = interpret_prediction(first_prediction(model, X))
     except Exception:
         # A failure inside the model itself (e.g. a retrained pickle
         # whose predict raises ValueError over a feature-count

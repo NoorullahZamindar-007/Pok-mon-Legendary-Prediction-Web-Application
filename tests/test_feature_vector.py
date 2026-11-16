@@ -424,6 +424,98 @@ def test_predict_still_shows_friendly_build_errors():
     assert "Total" in messages[0]
 
 
+def test_first_prediction_tolerates_scalar_returns():
+    # sklearn predict() normally returns a 1-element array, but a
+    # retrained/custom model can return a 0-d array or a bare scalar:
+    # [0] on those raises IndexError/TypeError and used to lose the
+    # prediction to the generic error page even though the model
+    # answered.
+    import numpy as _np
+
+    class _ScalarModel:
+        def __init__(self, value):
+            self._value = value
+
+        def predict(self, X):
+            return self._value
+
+    assert app.first_prediction(_ScalarModel(_np.array(True)), [[0.0]]) == True
+    assert app.first_prediction(_ScalarModel(True), [[0.0]]) == True
+    assert app.first_prediction(_ScalarModel([False]), [[0.0]]) == False
+    assert app.first_prediction(_ScalarModel(_np.array([True])), [[0.0]]) == True
+    # An empty result (or None) is still an error: there is no
+    # prediction to render.
+    for bad in ([], _np.array([]), None):
+        try:
+            app.first_prediction(_ScalarModel(bad), [[0.0]])
+        except ValueError as exc:
+            assert "no prediction" in str(exc)
+        else:
+            raise AssertionError("expected ValueError for %r" % (bad,))
+
+
+def test_predict_renders_a_scalar_prediction():
+    # End-to-end through the route: a model whose predict() returns a
+    # 0-d array must render (stubbed render_template returns ""), not
+    # flash the generic error.
+    import numpy as _np
+
+    class _ScalarPredictModel:
+        feature_names_in_ = FULL_FEATURES
+        classes_ = [False, True]
+
+        def predict_proba(self, X):
+            return [[0.2, 0.8]]
+
+        def predict(self, X):
+            return _np.array(True)
+
+    messages = []
+    previous_model = app._model
+    previous_form = app.request.form
+    previous_flash = app.flash
+    app._model = _ScalarPredictModel()
+    app.request.form = FakeForm({})
+    app.flash = lambda message, *a, **k: messages.append(message)
+    try:
+        assert app.predict() == ""
+    finally:
+        app._model = previous_model
+        app.request.form = previous_form
+        app.flash = previous_flash
+    assert messages == []
+
+
+def test_predict_errors_on_empty_prediction():
+    # A model returning no predictions has nothing to render: the
+    # route must flash the generic error, not crash on [0].
+    class _EmptyPredictModel:
+        feature_names_in_ = FULL_FEATURES
+        classes_ = [False, True]
+
+        def predict_proba(self, X):
+            return [[0.2, 0.8]]
+
+        def predict(self, X):
+            return []
+
+    messages = []
+    previous_model = app._model
+    previous_form = app.request.form
+    previous_flash = app.flash
+    app._model = _EmptyPredictModel()
+    app.request.form = FakeForm({})
+    app.flash = lambda message, *a, **k: messages.append(message)
+    try:
+        app.predict()
+    finally:
+        app._model = previous_model
+        app.request.form = previous_form
+        app.flash = previous_flash
+    assert len(messages) == 1
+    assert messages[0] == "Prediction failed — please try again."
+
+
 if __name__ == "__main__":
     # Kept at the end of the file: Python executes top to bottom, so a
     # block placed earlier runs before later tests are defined — the old
