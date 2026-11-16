@@ -1,3 +1,9 @@
+# Pinned to the versions the shipped pokemon_model.pickle was trained
+# with: unpickling under a different scikit-learn/numpy warns (or
+# breaks) with InconsistentVersionWarning, and numpy 1.24.0 has no
+# Python 3.12 wheel, so a fresh install on 3.12 falls back to building
+# from source and fails. Verified 2026-11-16: with these pins the model
+# loads with no version warning and all routes/tests pass.
 Flask==3.0.3
-numpy==1.24.0
-scikit-learn==1.5.2
+numpy==1.26.4
+scikit-learn==1.6.1
