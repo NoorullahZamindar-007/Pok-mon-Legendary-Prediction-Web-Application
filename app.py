@@ -261,6 +261,24 @@ def build_feature_vector(form, features):
     return np.array([[x[name] for name in features]], dtype=float), x
 
 
+def display_inputs(x_dict):
+    """Inputs worth showing on the result page.
+
+    The raw feature dict lists every one-hot column, so the result
+    table showed ~20 rows of 0.0 (every unpicked type and color) that
+    bury the values the user actually entered. Keep every numeric
+    feature and only the one-hot type/color features that are set.
+    """
+    shown = {}
+    for name, value in x_dict.items():
+        if name in TYPE_FEATURES or name in COLOR_FEATURES:
+            if value == 1.0:
+                shown[name] = value
+        else:
+            shown[name] = value
+    return shown
+
+
 def _is_positive_label(value):
     """True when a class label means the positive (Legendary) class.
 
@@ -413,7 +431,7 @@ def predict():
         "result.html",
         pred=pred,
         proba=proba,
-        input_data=x_dict
+        input_data=display_inputs(x_dict)
     )
 
 

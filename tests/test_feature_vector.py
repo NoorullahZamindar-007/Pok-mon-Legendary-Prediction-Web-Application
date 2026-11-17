@@ -182,6 +182,31 @@ def test_feature_vector_shape_and_order():
     assert vector2.shape == vector.shape
 
 
+def test_display_inputs_hides_unset_one_hots():
+    # The result table used to list every one-hot column, so ~20 rows
+    # of 0.0 (every unpicked type and color) buried the values the
+    # user actually entered. Only the set one-hots are shown now.
+    form = FakeForm(
+        {
+            "Total": "600",
+            "HP": "80",
+            "types": ["Fire", "Flying"],
+            "color": "Red",
+        }
+    )
+    _, x = app.build_feature_vector(form, FULL_FEATURES)
+    shown = app.display_inputs(x)
+    assert shown["Total"] == 600.0 and shown["HP"] == 80.0
+    assert shown["Fire"] == 1.0 and shown["Flying"] == 1.0
+    assert shown["Red"] == 1.0
+    assert "Water" not in shown and "Grass" not in shown
+    assert "Blue" not in shown and "Green" not in shown
+    # Numeric features stay visible even when zero, and the order of
+    # the model's feature list is preserved.
+    assert "Attack" in shown
+    assert list(shown)[:2] == ["Total", "HP"]
+
+
 def test_missing_model_features_raise_clear_error():
     form = FakeForm({"Total": "600"})
     features = [f for f in FULL_FEATURES if f != "Total"]
