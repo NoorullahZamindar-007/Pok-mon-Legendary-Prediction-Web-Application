@@ -63,3 +63,15 @@ main .container {
   margin-top: .25rem;
   color: rgba(0,0,0,.75);
 }
+
+/* Text rendered outside the light cards — the footer and the model
+   error page — sits on the dark page background, so it needs light
+   text: Bootstrap's default near-black body color is unreadable
+   there (1.2:1 contrast on the error heading, 4.0:1 on the muted
+   footer text, both below WCAG AA for small text). */
+footer, .light-on-dark {
+  color: rgba(255, 255, 255, .85);
+}
+footer .text-muted, .light-on-dark .text-muted {
+  --bs-secondary-color: rgba(255, 255, 255, .65);
+}
