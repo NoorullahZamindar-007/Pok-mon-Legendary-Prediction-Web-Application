@@ -117,6 +117,12 @@ The model loads lazily on first use: if `pokemon_model.pickle` is missing
 or corrupt, the app still starts and shows a friendly error page instead
 of crashing.
 
+## Health check
+
+`GET /health` returns `{"status": "ok", "model": "loaded"}` (or
+`"unavailable"` when the pickle is missing) — a liveness probe for
+container and PaaS hosts. It always answers 200 while the app is up.
+
 ## Running tests
 
 ```bash

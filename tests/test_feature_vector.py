@@ -26,6 +26,7 @@ if "flask" not in sys.modules:
             return deco
 
     flask_stub.Flask = _Flask
+    flask_stub.jsonify = lambda obj, **k: obj
     flask_stub.render_template = lambda *a, **k: ""
     flask_stub.request = types.SimpleNamespace(form={})
     flask_stub.redirect = lambda *a, **k: None
@@ -447,6 +448,35 @@ def test_predict_still_shows_friendly_build_errors():
         app.flash = previous_flash
     assert len(messages) == 1
     assert "Total" in messages[0]
+
+
+def test_health_reports_model_state():
+    # Liveness probe for PaaS hosts: always 200 while the app is up;
+    # the model field says whether a prediction is currently possible.
+    previous_model = app._model
+    app._model = object()
+    try:
+        body, status = app.health()
+        assert status == 200
+        assert body == {"status": "ok", "model": "loaded"}
+    finally:
+        app._model = previous_model
+
+    # A missing pickle must not fail the probe: the app is up and
+    # serves the friendly error page, so the model just reports
+    # unavailable.
+    previous_path = app.MODEL_PATH
+    app._model = None
+    app._model_error = None
+    app.MODEL_PATH = "/nonexistent/pokemon_model.pickle"
+    try:
+        body, status = app.health()
+        assert status == 200
+        assert body == {"status": "ok", "model": "unavailable"}
+    finally:
+        app._model = previous_model
+        app._model_error = None
+        app.MODEL_PATH = previous_path
 
 
 def test_first_prediction_tolerates_scalar_returns():

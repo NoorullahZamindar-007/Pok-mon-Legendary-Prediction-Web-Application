@@ -4,7 +4,7 @@ import sys
 import pickle
 import threading
 import numpy as np 
-from flask import Flask, render_template, request, redirect, url_for, flash 
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash 
  
 # ---- Fix for pickles created with newer numpy paths (numpy._core) ---- 
 # If your pickle throws: ModuleNotFoundError: No module named 'numpy._core'
@@ -382,6 +382,17 @@ def first_prediction(model, X):
     if value is None:
         raise ValueError("Model returned no prediction.")
     return value
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Liveness probe for PaaS/container hosts: always 200 while the
+    app is up. The model field is informational — a missing pickle
+    still serves the friendly error page, so it must not fail the
+    probe. get_model() triggers the lazy load, so a first probe after
+    a deploy also warms the model for the first prediction."""
+    model = get_model()
+    return jsonify({"status": "ok", "model": "loaded" if model is not None else "unavailable"}), 200
 
 
 @app.route("/", methods=["GET"])
