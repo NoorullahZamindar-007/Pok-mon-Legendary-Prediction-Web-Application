@@ -126,11 +126,15 @@ container and PaaS hosts. It always answers 200 while the app is up.
 ## Running tests
 
 ```bash
+pip install -r requirements.txt
 pip install pytest
 python -m pytest tests/
 ```
 
-The suite covers form parsing and feature-vector building (clamping of
+The tests import `app.py`, which needs NumPy (and the pinned
+scikit-learn for the model pickle), so installing only pytest is not
+enough — a fresh environment with just pytest fails at collection
+with `ModuleNotFoundError: No module named 'numpy'`. The suite covers form parsing and feature-vector building (clamping of
 out-of-range inputs, string-label handling, probability helpers) and the
 dashboard's feature-importance handling. It also runs directly without
 pytest:
