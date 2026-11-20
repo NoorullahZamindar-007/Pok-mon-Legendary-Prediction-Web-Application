@@ -12,14 +12,31 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+# test_app_routes.py imports the real Flask when it runs first in the
+# suite; these tests need the stub, so drop the real module (it has a
+# __file__) and any app module imported against it, then install the
+# stub below as usual.
+for _name in ("flask",):
+    _mod = sys.modules.get(_name)
+    if _mod is not None and getattr(_mod, "__file__", None) is not None:
+        del sys.modules[_name]
+        sys.modules.pop("app", None)
+
 if "flask" not in sys.modules:
     flask_stub = types.ModuleType("flask")
 
     class _Flask:
         def __init__(self, *args, **kwargs):
             self.secret_key = None
+            self.config = {}
 
         def route(self, *args, **kwargs):
+            def deco(func):
+                return func
+
+            return deco
+
+        def errorhandler(self, *args, **kwargs):
             def deco(func):
                 return func
 
@@ -368,6 +385,19 @@ def test_top_feature_importances_ranks_and_drops_non_finite():
     assert app.top_feature_importances(_RankedImportanceModel(), ["Total"]) == ([], [])
     # No importances attribute at all.
     assert app.top_feature_importances(object(), ["Total"]) == ([], [])
+
+
+def test_unknown_color_and_type_degrade_to_all_zero_one_hots():
+    # "Orange" is not a trained color and Fairy/Ghost are not among the
+    # 11 modelled types: the vector must stay well-formed (all-zero
+    # type/color one-hots) instead of raising or mis-assigning a feature.
+    form = FakeForm({"Total": "600", "types": ["Fairy", "Ghost"], "color": "Orange"})
+    vector, x = app.build_feature_vector(form, FULL_FEATURES)
+
+    assert vector.shape == (1, len(FULL_FEATURES))
+    for name in app.TYPE_FEATURES + app.COLOR_FEATURES:
+        assert x[name] == 0.0
+    assert x["Total"] == 600.0
 
 
 def test_dashboard_degrades_gracefully_for_scalar_importances():

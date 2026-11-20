@@ -19,6 +19,9 @@ except Exception:
     pass
 
 app = Flask(__name__)
+# The prediction form is ~2 KB; without a cap an unbounded POST body is
+# read into memory. 16 KB leaves ample room for the form plus overhead.
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 # Read the session-signing key from the environment so every deployment can
 # use its own secret. The fallback keeps local development working; set
 # SECRET_KEY in production because anyone with the default key can forge
@@ -382,6 +385,31 @@ def first_prediction(model, X):
     if value is None:
         raise ValueError("Model returned no prediction.")
     return value
+
+
+# Without these, a missing page, an oversized form or a server error
+# showed Flask's bare default pages with no way back to the predictor.
+_ERROR_MESSAGES = {
+    404: ("Page not found", "That page does not exist on this app."),
+    413: ("Form too large", "The submitted form was larger than the 16 KB limit."),
+    500: ("Something went wrong", "An unexpected error occurred. Please try again."),
+}
+
+
+@app.errorhandler(404)
+@app.errorhandler(413)
+@app.errorhandler(500)
+def handle_error(error):
+    """Render the app's own error page instead of Flask's bare default."""
+    title, message = _ERROR_MESSAGES.get(
+        error.code, ("Something went wrong", "An unexpected error occurred.")
+    )
+    return (
+        render_template(
+            "error.html", code=error.code, title=title, message=message
+        ),
+        error.code,
+    )
 
 
 @app.route("/health", methods=["GET"])
