@@ -387,16 +387,19 @@ def first_prediction(model, X):
     return value
 
 
-# Without these, a missing page, an oversized form or a server error
-# showed Flask's bare default pages with no way back to the predictor.
+# Without these, a missing page, a wrong-method request, an oversized
+# form or a server error showed Flask's bare default pages with no way
+# back to the predictor.
 _ERROR_MESSAGES = {
     404: ("Page not found", "That page does not exist on this app."),
+    405: ("Method not allowed", "This page only accepts form submissions — use the predictor form instead."),
     413: ("Form too large", "The submitted form was larger than the 16 KB limit."),
     500: ("Something went wrong", "An unexpected error occurred. Please try again."),
 }
 
 
 @app.errorhandler(404)
+@app.errorhandler(405)
 @app.errorhandler(413)
 @app.errorhandler(500)
 def handle_error(error):

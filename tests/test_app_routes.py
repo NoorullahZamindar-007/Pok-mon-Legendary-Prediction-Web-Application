@@ -63,6 +63,18 @@ def test_missing_page_renders_error_page(client):
     assert b"Back to the predictor" in response.data
 
 
+def test_get_predict_returns_branded_405_page(client):
+    # /predict only accepts POST: a direct GET (typed URL, crawler)
+    # used to show Flask's bare 405 page instead of the app's own
+    # error page with a way back to the predictor.
+    response = client.get("/predict")
+
+    assert response.status_code == 405
+    assert b"405" in response.data
+    assert b"Method not allowed" in response.data
+    assert b"Back to the predictor" in response.data
+
+
 def test_oversized_form_returns_413_page(client):
     # MAX_CONTENT_LENGTH is 16 KB: a 20 KB form must hit the 413
     # handler, not the bare Flask default page.
