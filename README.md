@@ -55,10 +55,12 @@ Pok-mon-Legendary-Prediction-Web-Application/
 │   ├── index.html
 │   ├── result.html
 │   ├── dashboard.html
-│   └── model_error.html
+│   ├── model_error.html
+│   └── error.html
 │
 ├── tests/
-│   └── test_feature_vector.py
+│   ├── test_feature_vector.py
+│   └── test_app_routes.py
 └── static/
     ├── css/
     │   └── style.css
@@ -136,7 +138,9 @@ scikit-learn for the model pickle), so installing only pytest is not
 enough — a fresh environment with just pytest fails at collection
 with `ModuleNotFoundError: No module named 'numpy'`. The suite covers form parsing and feature-vector building (clamping of
 out-of-range inputs, string-label handling, probability helpers) and the
-dashboard's feature-importance handling. It also runs directly without
+dashboard's feature-importance handling. The route tests cover the
+branded error pages (404/405/413/500), the 16 KB form-size cap, and
+the `/health` liveness probe. It also runs directly without
 pytest:
 
 ```bash

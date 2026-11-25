@@ -86,6 +86,16 @@ def test_oversized_form_returns_413_page(client):
     assert b"Form too large" in response.data
 
 
+def test_health_returns_ok(client):
+    # Liveness probe: always 200 while the app is up. The model field
+    # is not asserted — the probe must pass whether or not the pickle
+    # loads.
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "ok"
+
+
 def test_server_error_renders_error_page(client, monkeypatch):
     def _boom():
         raise RuntimeError("boom")
