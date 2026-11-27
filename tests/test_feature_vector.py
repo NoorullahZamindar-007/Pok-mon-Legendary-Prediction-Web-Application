@@ -43,9 +43,10 @@ if "flask" not in sys.modules:
             return deco
 
     flask_stub.Flask = _Flask
+    flask_stub.abort = lambda *a, **k: None
     flask_stub.jsonify = lambda obj, **k: obj
     flask_stub.render_template = lambda *a, **k: ""
-    flask_stub.request = types.SimpleNamespace(form={})
+    flask_stub.request = types.SimpleNamespace(form={}, content_length=None)
     flask_stub.redirect = lambda *a, **k: None
     flask_stub.url_for = lambda *a, **k: ""
     flask_stub.flash = lambda *a, **k: None

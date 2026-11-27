@@ -4,7 +4,7 @@ import sys
 import pickle
 import threading
 import numpy as np 
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash 
+from flask import Flask, abort, jsonify, render_template, request, redirect, url_for, flash 
  
 # ---- Fix for pickles created with newer numpy paths (numpy._core) ---- 
 # If your pickle throws: ModuleNotFoundError: No module named 'numpy._core'
@@ -442,6 +442,20 @@ def index():
 
 @app.route("/predict", methods=["POST"])
 def predict():
+    # Enforce the form-size cap before the model check: Flask only
+    # raises 413 when the form is parsed, and the route below returns
+    # the 503 model page first — so with a missing or corrupt pickle
+    # an oversized form answered 503 instead of 413. The cap is about
+    # the request, not the model, so check the declared length up
+    # front; a missing Content-Length (e.g. chunked upload) still
+    # hits Flask's own check when the form is read.
+    limit = app.config.get("MAX_CONTENT_LENGTH")
+    if (
+        limit is not None
+        and request.content_length is not None
+        and request.content_length > limit
+    ):
+        abort(413)
     model = get_model()
     if model is None:
         return model_unavailable()

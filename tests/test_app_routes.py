@@ -86,6 +86,20 @@ def test_oversized_form_returns_413_page(client):
     assert b"Form too large" in response.data
 
 
+def test_oversized_form_returns_413_even_when_model_unavailable(client, monkeypatch):
+    # The size cap is about the request, not the model: with a missing
+    # or corrupt pickle the route used to answer 503 (the model page)
+    # for an oversized form, because get_model() ran before the form
+    # was ever parsed and Flask's lazy 413 never fired.
+    monkeypatch.setattr(app, "get_model", lambda: None)
+
+    response = client.post("/predict", data={"Total": "9" * 20_000})
+
+    assert response.status_code == 413
+    assert b"413" in response.data
+    assert b"Form too large" in response.data
+
+
 def test_health_returns_ok(client):
     # Liveness probe: always 200 while the app is up. The model field
     # is not asserted — the probe must pass whether or not the pickle
