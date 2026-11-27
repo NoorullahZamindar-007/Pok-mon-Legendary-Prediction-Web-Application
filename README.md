@@ -139,8 +139,8 @@ enough — a fresh environment with just pytest fails at collection
 with `ModuleNotFoundError: No module named 'numpy'`. The suite covers form parsing and feature-vector building (clamping of
 out-of-range inputs, string-label handling, probability helpers) and the
 dashboard's feature-importance handling. The route tests cover the
-branded error pages (404/405/413/500), the 16 KB form-size cap, and
-the `/health` liveness probe. It also runs directly without
+branded error pages (404/405/413/500), the 16 KB form-size cap, the
+`/health` liveness probe, and rendering `/dashboard` with a stub model. It also runs directly without
 pytest:
 
 ```bash

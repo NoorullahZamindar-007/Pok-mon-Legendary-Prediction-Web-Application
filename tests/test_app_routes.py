@@ -3,7 +3,8 @@
 test_feature_vector.py stubs Flask entirely, so the error handlers and
 the MAX_CONTENT_LENGTH cap had zero coverage. These tests use the real
 Flask test client; the model is never loaded (the 404/413 paths and
-the stubbed 500 path do not touch it).
+the stubbed 500 path do not touch it). The /dashboard tests stub the
+model so the page renders for real without the pickle.
 """
 
 import sys
@@ -108,6 +109,43 @@ def test_health_returns_ok(client):
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "ok"
+
+
+class _StubModel:
+    """Stand-in for the trained model: feature names + importances only."""
+
+    feature_names_in_ = ["Total", "HP", "Attack"]
+    feature_importances_ = [0.5, 0.3, 0.2]
+
+
+def test_dashboard_renders_chart_with_stub_model(client, monkeypatch):
+    # /dashboard had no real-Flask coverage: the helper tests call the
+    # view against a render stub, so a typo in dashboard.html (or a
+    # missing template variable) would ship silently. Render it for
+    # real with a stub model and check the chart lands on the page.
+    monkeypatch.setattr(app, "get_model", lambda: _StubModel())
+
+    response = client.get("/dashboard")
+
+    assert response.status_code == 200
+    assert b"importanceChart" in response.data
+    assert b"window.__IMPORTANCE__" in response.data
+    assert b"Total" in response.data
+
+
+def test_dashboard_shows_warning_without_importances(client, monkeypatch):
+    # A model with no feature_importances_ must show the dashboard's
+    # "not available" warning, not an empty chart card.
+    class _NoImportances:
+        feature_names_in_ = ["Total", "HP"]
+
+    monkeypatch.setattr(app, "get_model", lambda: _NoImportances())
+
+    response = client.get("/dashboard")
+
+    assert response.status_code == 200
+    assert b"Feature importance not available" in response.data
+    assert b"importanceChart" not in response.data
 
 
 def test_server_error_renders_error_page(client, monkeypatch):
