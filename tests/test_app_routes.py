@@ -148,6 +148,78 @@ def test_dashboard_shows_warning_without_importances(client, monkeypatch):
     assert b"importanceChart" not in response.data
 
 
+def test_index_renders_predictor_form_with_real_model(client):
+    # index.html had no real-Flask coverage: the predict tests call
+    # the view against a render stub, so a typo in the form template
+    # (or a missing variable like model_name) would ship silently.
+    # The real pickle loads here, so the form renders for real.
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"Legendary Prediction" in response.data
+    assert b"Generation" in response.data
+    assert b"RandomForestClassifier" in response.data
+
+
+def test_predict_renders_result_with_real_model(client):
+    # The predict happy path was only ever exercised against a render
+    # stub, so result.html itself (the probability line, the inputs
+    # table) was never rendered for real. Post the form's own defaults
+    # and check the page that comes back.
+    response = client.post(
+        "/predict",
+        data={
+            "Generation": "1",
+            "Catch_Rate": "45",
+            "Total": "390",
+            "HP": "60",
+            "Attack": "70",
+            "Defense": "60",
+            "Sp_Atk": "70",
+            "Sp_Def": "60",
+            "Speed": "70",
+            "Height_m": "1.0",
+            "Weight_kg": "10",
+            "Pr_Male": "0.5",
+            "Body_Style_new": "1",
+            "hasGender": "on",
+        },
+    )
+
+    assert response.status_code == 200
+    assert b"Prediction Result" in response.data
+    assert b"Probability (Legendary)" in response.data
+    assert b"Total" in response.data
+
+
+def test_index_and_dashboard_render_model_error_page_when_model_unavailable(
+    client, monkeypatch
+):
+    # With a missing or corrupt pickle both pages answer 503 with the
+    # branded model_error.html; that page had no real-Flask coverage,
+    # so a typo in it (or a renamed template variable) would ship
+    # silently. The error text is set explicitly: monkeypatching
+    # get_model alone leaves _model_error at whatever a previous
+    # load left behind.
+    monkeypatch.setattr(app, "get_model", lambda: None)
+    monkeypatch.setattr(
+        app,
+        "_model_error",
+        "Model file not found: pokemon_model.pickle. Train the model "
+        "with Pokemon.ipynb and place pokemon_model.pickle next to app.py.",
+    )
+
+    index_response = client.get("/")
+    assert index_response.status_code == 503
+    assert b"Prediction model unavailable" in index_response.data
+    assert b"Model file not found" in index_response.data
+    assert b"Try again" in index_response.data
+
+    dashboard_response = client.get("/dashboard")
+    assert dashboard_response.status_code == 503
+    assert b"Prediction model unavailable" in dashboard_response.data
+
+
 def test_server_error_renders_error_page(client, monkeypatch):
     def _boom():
         raise RuntimeError("boom")
